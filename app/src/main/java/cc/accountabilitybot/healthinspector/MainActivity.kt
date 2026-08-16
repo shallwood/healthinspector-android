@@ -55,9 +55,9 @@ fun Greeting(name: String) {
 
     val context = LocalContext.current
 
-    val healthConnectAvailable =
-        HealthConnectClient.getSdkStatus(context) ==
-                androidx.health.connect.client.HealthConnectClient.Companion.SDK_AVAILABLE
+    val healthPermissions = setOf(
+        HealthPermission.getReadPermission(StepsRecord::class)
+    )
 
     Text(
         if (healthConnectAvailable)
