@@ -51,5 +51,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha11")
+    implementation("androidx.health.connect:connect-client:1.1.0")
 }

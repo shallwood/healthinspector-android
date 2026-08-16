@@ -2,97 +2,86 @@ package cc.accountabilitybot.healthinspector
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
-import cc.accountabilitybot.healthinspector.ui.theme.HealthInspectorTheme
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
-import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.PermissionController
-import androidx.health.connect.client.HealthConnectClient
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.health.connect.client.HealthConnectClient.Companion.SDK_AVAILABLE
-import androidx.health.connect.client.HealthConnectClient.Companion.getOrCreate
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.StepsRecord
+import cc.accountabilitybot.healthinspector.ui.theme.HealthInspectorTheme
+
+private val STEP_PERMISSIONS = setOf(
+    HealthPermission.getReadPermission(StepsRecord::class)
+)
 
 class MainActivity : ComponentActivity() {
-    private val healthPermissions = setOf(
-        HealthPermission.getReadPermission(StepsRecord::class)
-    )
-
-    private val permissionLauncher =
-        registerForActivityResult(
-            PermissionController.createRequestPermissionResultContract()
-        ) { grantedPermissions ->
-
-            if (grantedPermissions.containsAll(healthPermissions)) {
-                println("Health Connect permission granted")
-            } else {
-                println("Permission denied")
-            }
-        }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             HealthInspectorTheme {
-                Greeting("Health Inspector")
+                HealthInspectorScreen()
             }
         }
     }
 }
 
 @Composable
-fun Greeting(name: String) {
-    var status by remember { mutableStateOf("Waiting") }
-
+fun HealthInspectorScreen() {
     val context = LocalContext.current
+    val healthConnectAvailable =
+        HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
 
-    val healthPermissions = setOf(
-        HealthPermission.getReadPermission(StepsRecord::class)
-    )
+    var status by remember {
+        mutableStateOf(
+            if (healthConnectAvailable) "Waiting for permission request"
+            else "Health Connect unavailable"
+        )
+    }
 
-    Text(
-        if (healthConnectAvailable)
-            "\n\n\n\n\n\nHealth Connect available"
-        else
-            "\n\n\n\n\n\nHealth Connect unavailable"
-    )
-
-    val healthPermissions = setOf(
-        HealthPermission.getReadPermission(StepsRecord::class)
-    )
-
-    val permissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = PermissionController.createRequestPermissionResultContract()
-        ) { grantedPermissions ->
-            if (grantedPermissions.containsAll(healthPermissions)) {
-               status = "Health permission granted"
-            } else {
-                status = "Granted permissions:\n$grantedPermissions"
-            }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = PermissionController.createRequestPermissionResultContract()
+    ) { grantedPermissions ->
+        status = if (grantedPermissions.containsAll(STEP_PERMISSIONS)) {
+            "Steps permission granted"
+        } else {
+            "Permission not granted\nReturned: $grantedPermissions"
         }
+    }
 
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text("Health Inspector", style = MaterialTheme.typography.headlineMedium)
         Text(
-            text = name
+            if (healthConnectAvailable) "Health Connect available"
+            else "Health Connect unavailable"
         )
 
         Button(
-            onClick = {
-                // Health Connect permission request will go here
-                permissionLauncher.launch(healthPermissions)
-            }
+            enabled = healthConnectAvailable,
+            onClick = { permissionLauncher.launch(STEP_PERMISSIONS) }
         ) {
-            Text("Request Health Permissions")
+            Text("Request Steps Permission")
         }
 
         Text(status)
@@ -101,10 +90,8 @@ fun Greeting(name: String) {
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun HealthInspectorPreview() {
     HealthInspectorTheme {
-        Greeting("Health Inspector")
-
-
+        HealthInspectorScreen()
     }
 }
