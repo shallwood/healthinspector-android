@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                     println("Nutrition read failed: ${e.message}")
                     e.printStackTrace()
-                }
+               }
             }
         }
     }
