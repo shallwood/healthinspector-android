@@ -5,6 +5,9 @@
     <uses-permission
         android:name="android.permission.health.READ_STEPS"
         tools:ignore="HealthConnectPolicy" />
+    <uses-permission
+        android:name="android.permission.health.READ_NUTRITION"
+        tools:ignore="HealthConnectPolicy" />
 
     <application
         android:allowBackup="true"

@@ -24,10 +24,18 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.NutritionRecord
+import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.time.TimeRangeFilter
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.Instant
 import cc.accountabilitybot.healthinspector.ui.theme.HealthInspectorTheme
 
 private val STEP_PERMISSIONS = setOf(
-    HealthPermission.getReadPermission(StepsRecord::class)
+    HealthPermission.getReadPermission(StepsRecord::class),
+    HealthPermission.getReadPermission(NutritionRecord::class)
 )
 
 class MainActivity : ComponentActivity() {
@@ -93,5 +101,48 @@ fun HealthInspectorScreen() {
 fun HealthInspectorPreview() {
     HealthInspectorTheme {
         HealthInspectorScreen()
+    }
+}
+
+private fun readNutritionSample() {
+    val healthConnectClient = HealthConnectClient.getOrCreate(this)
+
+    lifecycleScope.launch {
+        try {
+            val endTime = Instant.now()
+            val startTime = endTime.minus(Duration.ofHours(24))
+
+            val response = healthConnectClient.readRecords(
+                ReadRecordsRequest(
+                    NutritionRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(
+                        startTime,
+                        endTime
+                    )
+                )
+            )
+
+            println("Nutrition records found: ${response.records.size}")
+
+            response.records.forEachIndexed { index, record ->
+                println("----- Nutrition Record $index -----")
+                println("Source: ${record.metadata.dataOrigin.packageName}")
+                println("Name: ${record.name}")
+                println("Meal type: ${record.mealType}")
+                println("Start: ${record.startTime}")
+                println("End: ${record.endTime}")
+                println("Energy: ${record.energy}")
+                println("Protein: ${record.protein}")
+                println("Carbohydrate: ${record.totalCarbohydrate}")
+                println("Fat: ${record.totalFat}")
+                println("Fiber: ${record.dietaryFiber}")
+                println("Sugar: ${record.sugar}")
+                println("Record ID: ${record.metadata.id}")
+            }
+
+        } catch (e: Exception) {
+            println("Nutrition read failed: ${e.message}")
+            e.printStackTrace()
+        }
     }
 }
