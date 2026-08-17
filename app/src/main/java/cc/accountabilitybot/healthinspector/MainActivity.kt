@@ -44,14 +44,21 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             HealthInspectorTheme {
-                HealthInspectorScreen()
+                HealthInspectorScreen(
+                    onReadNutrition = { readNutritionSample() }
+                )
             }
         }
+    }
+    private fun readNutritionSample() {
+        // your existing nutrition-reading code here
     }
 }
 
 @Composable
-fun HealthInspectorScreen() {
+fun HealthInspectorScreen(
+    onReadNutrition: () -> Unit
+) {
     val context = LocalContext.current
     val healthConnectAvailable =
         HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
@@ -87,10 +94,17 @@ fun HealthInspectorScreen() {
 
         Button(
             enabled = healthConnectAvailable,
+            onClick = onReadNut1rition
+        ) {
+            Text("Read Nutrition Sample")
+        }
+        Button(
+            enabled = healthConnectAvailable,
             onClick = { permissionLauncher.launch(STEP_PERMISSIONS) }
         ) {
             Text("Request Steps Permission")
         }
+
 
         Text(status)
     }
